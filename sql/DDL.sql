@@ -1,0 +1,95 @@
+Drop TABLE if exists callMaintenance;
+Drop Table if exists Equipments;
+Drop Table if exists Admins;
+Drop Table if exists bookedSessions;
+Drop Table if exists Availabilities;
+Drop Table if exists fitness_goals;
+Drop Table if exists Bills;
+Drop Table if exists Members;
+Drop Table if exists Trainers;
+Drop Table if exists Rooms;
+
+CREATE TABLE Members(
+    member_id SERIAL PRIMARY KEY, 
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL, 
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password varChar(255) NOT NULL, 
+    height INTEGER, 
+    width INTEGER
+);
+
+CREATE TABLE Trainers(
+    trainer_id SERIAL PRIMARY KEY, 
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL, 
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password varChar(255) NOT NULL
+);
+
+CREATE TABLE Admins (
+    admin_id SERIAL PRIMARY KEY, 
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL, 
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password varChar(255) NOT NULL
+);
+
+CREATE TABLE Rooms (
+    room_id SERIAL PRIMARY KEY, 
+    room_name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Equipments (
+    equipment_id SERIAL PRIMARY KEY,
+    equipment_name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Availabilities(
+    trainer_id INTEGER,
+    day INTEGER CHECK (day >=1 AND day <= 7), 
+    starting_time TIME, 
+    ending_time TIME,
+    is_group_session BOOLEAN, 
+    PRIMARY KEY (day, starting_time, ending_time, trainer_id),
+    FOREIGN KEY (trainer_id) REFERENCES Trainers (trainer_id)
+);
+
+CREATE TABLE bookedSessions( 
+    member_id INTEGER,
+    trainer_id INTEGER, 
+    room_id INTEGER,
+    day INTEGER CHECK (day >=1 AND day <= 7), 
+    starting_time TIME, 
+    ending_time TIME,
+    FOREIGN KEY (member_id) REFERENCES Members (member_id),
+    FOREIGN KEY (trainer_id) REFERENCES Trainers (trainer_id),
+    FOREIGN KEY (room_id) REFERENCES Rooms (room_id)
+);
+
+CREATE TABLE Bills (
+    transaction_id SERIAL PRIMARY KEY, 
+    member_id INTEGER,
+    amount INTEGER, 
+    transaction_data INTEGER, 
+    isPaid Boolean,
+    FOREIGN KEY (member_id) REFERENCES Members (member_id)
+);
+
+CREATE TABLE Fitness_Goals(
+    goal_type INTEGER,
+    member_id INTEGER,
+    goal_value INTEGER, 
+    goal_date DATE,
+    FOREIGN KEY (member_id) REFERENCES Members (member_id),
+    PRIMARY KEY (goal_type, member_id)
+);
+
+CREATE TABLE callMaintenance( 
+    admin_id INTEGER,
+    equipment_id INTEGER,
+    starting_date DATE,
+    ending_date DATE,
+    FOREIGN KEY (admin_id) REFERENCES Admins (admin_id),
+    FOREIGN KEY (equipment_id) REFERENCES Equipments (equipment_id)
+);
