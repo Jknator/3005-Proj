@@ -20,7 +20,7 @@ INSERT INTO Admins(first_name, last_name, email, password)
 VALUES 
 ('Stephanie', 'Kim', 'Stephanie@gmail.com', 'password13'),
 ('Randomer', 'Name', 'RandomerName@gmail.com', 'password14'),
-('Supa', 'Manner', 'SupaManner@gmail.com', 'password15');
+('Terry', 'Kwak', 'TerryKwak@gmail.com', 'password15');
 
 INSERT INTO Rooms(room_name)
 VALUES
