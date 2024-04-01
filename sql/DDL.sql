@@ -1,14 +1,3 @@
-Drop TABLE if exists callMaintenance;
-Drop Table if exists Equipments;
-Drop Table if exists Admins;
-Drop Table if exists bookedSessions;
-Drop Table if exists Availabilities;
-Drop Table if exists fitness_goals;
-Drop Table if exists Bills;
-Drop Table if exists Members;
-Drop Table if exists Trainers;
-Drop Table if exists Rooms;
-
 CREATE TABLE Members(
     member_id SERIAL PRIMARY KEY, 
     first_name VARCHAR(255) NOT NULL,
@@ -55,7 +44,7 @@ CREATE TABLE Availabilities(
     FOREIGN KEY (trainer_id) REFERENCES Trainers (trainer_id)
 );
 
-CREATE TABLE bookedSessions( 
+CREATE TABLE BookedSessions( 
     member_id INTEGER,
     trainer_id INTEGER, 
     room_id INTEGER,
@@ -76,7 +65,7 @@ CREATE TABLE Bills (
     FOREIGN KEY (member_id) REFERENCES Members (member_id)
 );
 
-CREATE TABLE Fitness_Goals(
+CREATE TABLE FitnessGoals(
     goal_type INTEGER,
     member_id INTEGER,
     goal_value INTEGER, 
@@ -85,7 +74,7 @@ CREATE TABLE Fitness_Goals(
     PRIMARY KEY (goal_type, member_id)
 );
 
-CREATE TABLE callMaintenance( 
+CREATE TABLE CallMaintenance( 
     admin_id INTEGER,
     equipment_id INTEGER,
     starting_date DATE,
@@ -93,3 +82,16 @@ CREATE TABLE callMaintenance(
     FOREIGN KEY (admin_id) REFERENCES Admins (admin_id),
     FOREIGN KEY (equipment_id) REFERENCES Equipments (equipment_id)
 );
+
+/*
+Drop TABLE if exists CallMaintenance;
+Drop Table if exists Equipments;
+Drop Table if exists Admins;
+Drop Table if exists BookedSessions;
+Drop Table if exists Availabilities;
+Drop Table if exists FitnessGoals;
+Drop Table if exists Bills;
+Drop Table if exists Members;
+Drop Table if exists Trainers;
+Drop Table if exists Rooms;
+*/

@@ -8,6 +8,14 @@
     </head>
     <body>
         <h1>Welcome admin, please sign in!</h1>
+        
+        <% if (messages.success) { %>
+        <li>><%= messages.success %></li>
+        <% } %>
+        <% if (messages.error) { %>
+            <li><%= messages.error %></li> 
+        <% } %>
+
         <div class="container">
           <form action = "/admin-login" method="post">
               <input type = "email" id="email" name = "email" placeholder="Email" required>

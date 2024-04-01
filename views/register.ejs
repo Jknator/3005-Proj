@@ -9,11 +9,12 @@
     <body>
         <h1>Welcome, please input information and become a member today!</h1>
 
-        <ul>
-          <% if (typeof errors != 'undefined') { %> <% errors.forEach(error => { %>
-          <li><%= error.message %></li>
-          <% }) %> <% } %>
-        </ul>
+        <% if (messages.success) { %>
+            <li>><%= messages.success %></li>
+        <% } %>
+        <% if (messages.error) { %>
+              <li><%= messages.error %></li> 
+        <% } %>
 
         <div class="container">
           <form id="myForm" action = "/register" method="post" autocomplete="off">

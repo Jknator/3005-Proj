@@ -2,6 +2,9 @@
 require('dotenv').config();
 const express = require("express")
 const bcrypt = require('bcrypt')
+const flash = require('connect-flash');
+const session = require('express-session');
+const setupDatabase = require('./setup-database');
 const {Client} = require('pg')
 
 //app and port to listen 
@@ -19,7 +22,7 @@ const client = new Client({
 
 client.connect()
 .then(() => {
-    console.log("Connected to PostgresSQL databse")
+    console.log("Connected to PostgresSQL database")
 })
 .catch((err)=> {
     console.error("Error connecting to PostgreSQL database" , err)
@@ -32,6 +35,17 @@ app.use('/js', express.static(__dirname + 'public/js'))
 app.use('/img', express.static(__dirname + 'public/img'))
 //send details from front end to our server
 app.use(express.urlencoded({extended: false}));
+
+app.use(session({
+    secret: "random-secret",
+    saveUninitialized: true,
+    resave: true
+}));
+app.use(flash());
+app.use(function(req, res, next){
+    res.locals.messages = req.flash();
+    next();
+})
 
 //set Views 
 app.set('views', './views')
@@ -74,62 +88,139 @@ app.get('/register', (req,res) => {
     res.render('register')
 });
 
-//handling post requests
-app.post("/member-login", (req,res) => {
-    let {email, password} = req.body; 
-    console.log({email,password})
-
-});
-
 
 //handles if a user wants to register 
 app.post("/register", async (req,res) => {
     let {first_name, last_name, email, password, confirm_password} = req.body;
-    let errors = [];
-
-    console.log({
-        first_name,
-        last_name,
-        email,
-        password,
-        confirm_password 
-    })
 
     //checking for all possible errors that can occur, currently I only have one thing to check
     //checking if passwords match
     if(password != confirm_password){
-        console.log("wrong passwords")
-        errors.push({message: "Your password seems to be inconsistent. Please enter same password twice."});
+        console.log("passwords dont match")
+        req.flash("error", 'Password must match!')
+        return res.redirect("/register");
     }
-
-    //tell the client of possible errors 
-    if(errors.length > 0) {
-        console.log("I found error");
-        res.render("register", {errors});
-    }
+    
     //passenger has put the proper information to register an account
-    else{
-        try{
-            let hashed_password = await bcrypt.hash(password, 10); 
+    try{
+        let hashed_password = await bcrypt.hash(password, 10); 
 
-            //checking to see if the email is already in members table, if so then reject account creation
-            //else make account
-            const queryResult = client.query("SELECT * FROM MEMBERS WHERE UPPER(email) = UPPER($1)", [email]);
-            if((await queryResult).rows.length >= 1){
-                errors.push({message: "Email already registered."});
-                res.render("register", {errors});
+        //checking to see if the email is already in members table, if so then reject account creation
+        //else make account
+        const queryResult = await client.query("SELECT * FROM MEMBERS WHERE UPPER(email) = UPPER($1)", [email]);
+        if((await queryResult).rows.length >= 1){
+            console.log("email not unique")
+            req.flash("error", 'Email already registered.')
+            return res.redirect("/register");
+        }
+        else{
+            //creating the account
+            console.log("Making account")
+            client.query("INSERT INTO Members(first_name, last_name, email, password) VALUES  ($1, $2, $3, $4)", [first_name, last_name, email, hashed_password]);
+            return res.redirect("/member-login");
+        }
+    }
+    catch(err){
+        console.error("Error:", err);
+        //return res.render("error", {message: "An error occurred. Please try again."});
+    }
+    
+});
+
+//handles how members log in to personal dashboards
+app.post("/member-login", async (req,res) => {
+    let {email, password} = req.body;
+    try{
+        const queryResult = await client.query("SELECT * FROM members WHERE UPPER(email) = UPPER($1)", [email]);
+        
+        if((queryResult).rows.length >= 1){
+            const member = queryResult.rows[0];
+            const password_matches = await bcrypt.compare(password, member.password);
+
+            if(password_matches){
+                return res.redirect("/member");
             }
             else{
-                //creating the account
-                console.log("Time to create an account")
-                client.query("INSERT INTO Members(first_name, last_name, email, password) VALUES  ($1, $2, $3, $4)", [first_name, last_name, email, hashed_password]);
+                console.log("Password did not match");
+                req.flash("error", "Passwords did not match")
                 return res.redirect("/member-login");
             }
         }
-        catch(err){
-            console.error("Error:", err);
-            return res.render("error", {message: "An error occurred. Please try again."});
+        else{
+            console.log("Member does not exist");
+            req.flash("error", "Member does not exist")
+            return res.redirect("/member-login");
         }
+    }
+    catch(err){
+        console.error("Error:", err);
+        //req.flash("error", "User does not exist")
+        //return res.redirect("/member-login");
+    }
+});
+
+//handles how trainers log in to personal dashboards
+app.post("/trainer-login", async (req,res) => {
+    let {email, password} = req.body;
+    try{
+        const queryResult = await client.query("SELECT * FROM trainers WHERE UPPER(email) = UPPER($1)", [email]);
+        
+        if((queryResult).rows.length >= 1){
+            const trainer = queryResult.rows[0];
+            const password_matches = await bcrypt.compare(password, trainer.password);
+
+            if(password_matches){
+                return res.redirect("/trainer");
+            }
+            else{
+                console.log("Password did not match");
+                req.flash("error", "Passwords did not match")
+                return res.redirect("/trainer-login");
+            }
+        }
+        else{
+            console.log("Trainer does not exist");
+            req.flash("error", "Trainer does not exist")
+            return res.redirect("/trainer-login");
+        }
+    }
+    catch(err){
+        console.error("Error:", err);
+        //req.flash("error", "User does not exist")
+        //return res.redirect("/member-login");
+    }
+});
+
+
+//handles how admins log in to personal dashboards
+app.post("/admin-login", async (req,res) => {
+    let {email, password} = req.body;
+    try{
+        const queryResult = await client.query("SELECT * FROM admins WHERE UPPER(email) = UPPER($1)", [email]);
+        
+        if((await queryResult).rows.length >= 1){
+            const admin = queryResult.rows[0];
+            const password_matches = await bcrypt.compare(password, admin.password);
+
+            if(password_matches){
+                return res.redirect("/admin");
+            }
+            else{
+                console.log("Password did not match");
+                req.flash("error", "Passwords did not match")
+                return res.redirect("/admin-login");
+            }
+        }
+        else{
+            console.log("Admin does not exist");
+            req.flash("error", "Admin does not exist")
+            return res.redirect("/admin-login");
+        }
+    }
+    catch(err){
+        console.error("Error:", err);
+        //req.flash("error", "User does not exist")
+        //return res.redirect("/member-login");
     }
 });
 

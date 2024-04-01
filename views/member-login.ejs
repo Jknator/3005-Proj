@@ -8,9 +8,16 @@
     </head>
     <body>
         <h1>Welcome member, please sign in!</h1>
+
+        <% if (messages.success) { %>
+          <li>><%= messages.success %></li>
+        <% } %>
+        <% if (messages.error) { %>
+              <li><%= messages.error %></li> 
+        <% } %>
       
         <div class="container">
-          <form action = "/member-login" method="post">
+          <form action = "/member-login" method="post" autocomplete="off">
               <div>
                 <input type = "email" id="email" name = "email" placeholder="Email" required>
               </div>
