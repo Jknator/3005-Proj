@@ -141,8 +141,8 @@ app.post("/member-login", async (req,res) => {
                 return res.redirect("/member");
             }
             else{
-                console.log("Password did not match");
-                req.flash("error", "Passwords did not match")
+                console.log("Incorrect password");
+                req.flash("error", "Incorrect password")
                 return res.redirect("/member-login");
             }
         }
@@ -173,8 +173,8 @@ app.post("/trainer-login", async (req,res) => {
                 return res.redirect("/trainer");
             }
             else{
-                console.log("Password did not match");
-                req.flash("error", "Passwords did not match")
+                console.log("Incorrect password");
+                req.flash("error", "Incorrect password")
                 return res.redirect("/trainer-login");
             }
         }
@@ -206,8 +206,8 @@ app.post("/admin-login", async (req,res) => {
                 return res.redirect("/admin");
             }
             else{
-                console.log("Password did not match");
-                req.flash("error", "Passwords did not match")
+                console.log("Incorrect password");
+                req.flash("error", "Incorrect password")
                 return res.redirect("/admin-login");
             }
         }
