@@ -31,7 +31,8 @@ CREATE TABLE Rooms (
 
 CREATE TABLE Equipments (
     equipment_id SERIAL PRIMARY KEY,
-    equipment_name VARCHAR(255) NOT NULL
+    equipment_name VARCHAR(255) NOT NULL,
+    equipment_status INTEGER NOT NULL
 );
 
 CREATE TABLE Availabilities(

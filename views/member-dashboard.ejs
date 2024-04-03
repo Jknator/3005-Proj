@@ -114,8 +114,8 @@
         <hr>
 
         <h2><u>Fitness Goals</u></h2>
-        <% if (messages.test) { %>
-            <li><%= messages.test %></li>
+        <% if (messages.error) { %>
+            <li><%= messages.error %></li>
         <% } %>
 
         <p class="centerText">
@@ -135,7 +135,7 @@
         
         <p class="centerText"><u>Health Goals</u></p>
 
-        <table id="fitness_goals" border="1" style = "weight: 50%; table-layout: fixed; word-wrap: break-word;">
+        <table id="fitness_goals" border="1" style = "width: 50%; table-layout: fixed; word-wrap: break-word;">
             <thead>
                 <tr>
                     <th>Fitness Goal</th>
@@ -154,7 +154,7 @@
         <br>
 
         <div class="center-text"> 
-            <input type="number" id="remove-row" min="0" max="<%= fitnessGoals.length %>" placeholder="Delete Row">
+            <input type="number" id="remove-row" min="1" max="<%= fitnessGoals.length %>" placeholder="Delete Row">
             <button id="delete-button">Delete Row</button>
         </div>
 

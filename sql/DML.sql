@@ -35,36 +35,36 @@ VALUES
 ('Personal Training Room 2'),
 ('Personal Training Room 3');
 
-INSERT INTO Equipments(equipment_name)
+INSERT INTO Equipments(equipment_name, equipment_status)
 VALUES
-('Treadmill'),
-('Barbell'),
-('Dumbbells'),
-('Elliptical Trainer'),
-('Stationary Bike'),
-('Leg Press Machine'),
-('Cable Machine'),
-('Kettlebells'),
-('Rowing Machine'),
-('Smith Machine'),
-('Punching Bag');
+('Treadmill', 87),
+('Barbell', 42),
+('Dumbbells', 30),
+('Elliptical Trainer', 100),
+('Stationary Bike', 78),
+('Leg Press Machine', 24),
+('Cable Machine', 2),
+('Kettlebells', 67),
+('Rowing Machine', 51),
+('Smith Machine',3),
+('Punching Bag', 58);
 
 INSERT INTO Availabilities(trainer_id, day, starting_time, ending_time, is_group_session)
 VALUES
-(1, 1, '08:00:00', '10:00:00', false),
-(1, 3, '14:00:00', '16:00:00', true),
-(1, 5, '18:00:00', '20:00:00', false),
-(2, 2, '09:00:00', '11:00:00', true),
-(2, 4, '13:00:00', '15:00:00', false),
-(2, 6, '16:30:00', '18:30:00', false),
-(3, 1, '10:00:00', '12:00:00', false),
-(3, 3, '15:00:00', '17:00:00', true),
-(3, 5, '19:00:00', '21:00:00', false),
-(4, 2, '08:30:00', '10:30:00', true),
-(4, 4, '12:30:00', '14:30:00', false),
-(4, 6, '17:00:00', '19:00:00', false),
-(5, 1, '09:30:00', '11:30:00', true),
-(5, 3, '14:30:00', '16:30:00', false),
-(5, 5, '18:30:00', '20:30:00', false);
+(1, 'Sunday', '08:00:00', '10:00:00', false),
+(1, 'Tuesday', '14:00:00', '16:00:00', true),
+(1, 'Thursday', '18:00:00', '20:00:00', false),
+(2, 'Monday', '09:00:00', '11:00:00', true),
+(2, 'Wednesday', '13:00:00', '15:00:00', false),
+(2, 'Friday', '16:30:00', '18:30:00', false),
+(3, 'Sunday', '10:00:00', '12:00:00', false),
+(3, 'Tuesday', '15:00:00', '17:00:00', true),
+(3, 'Thursday', '19:00:00', '21:00:00', false),
+(4, 'Tuesday', '08:30:00', '10:30:00', true),
+(4, 'Thursday', '12:30:00', '14:30:00', false),
+(4, 'Friday', '17:00:00', '19:00:00', false),
+(5, 'Saturday', '09:30:00', '11:30:00', true),
+(5, 'Tuesday', '14:30:00', '16:30:00', false),
+(5, 'Friday', '18:30:00', '20:30:00', false);
 
 

@@ -90,10 +90,13 @@ app.get('/trainer', async (req,res) => {
         if (!trainer) {
             return res.redirect("/trainer-login");
         }
-        const results = await client.query("SELECT * FROM Members");
-        const members = results.rows;
+        const result1 = await client.query("SELECT * FROM Availabilities WHERE trainer_id = $1;", [trainer.trainer_id]);
+        const availabilities = result1.rows;
 
-        res.render('trainer-dashboard', {trainer: trainer, members: members});
+        const result2 = await client.query("SELECT * FROM Members");
+        const members = result2.rows;
+
+        res.render('trainer-dashboard', {trainer: trainer, members: members, availabilities: availabilities});
     }
     catch(err){
         console.error(err)
@@ -254,6 +257,7 @@ app.post("/admin-login", async (req,res) => {
     }
 });
 
+//handing all post requests from member-dashboard
 app.post("/member", async (req,res) => {
 
     //change details of the member
@@ -296,6 +300,7 @@ app.post("/member", async (req,res) => {
             //return res.redirect("/member-login");
         }
     }
+    //adding a new fitness goal
     else if(req.body.id == "adding_new_fitness_goal"){
         try{
             let {fitness_goal, goal_deadline, member_id} = req.body;
@@ -322,6 +327,7 @@ app.post("/member", async (req,res) => {
             console.error("Error:", err);
         }
     }
+    //deleting a goal
     else if(req.body.id == "delete-goal"){
         try{
             console.log(req.body)
@@ -346,6 +352,48 @@ app.post("/member", async (req,res) => {
     }
 
 });
+
+
+app.post("/trainer", async (req,res) => {
+    //adding an availability 
+    if(req.body.id == "set-schedule"){
+        console.log(req.body)
+        try{
+            const {trainer_id, day, starting_time, ending_time, is_group_session} = req.body;
+             //check to see if there are any matching availabilities 
+             const checkUnique = client.query("SELECT * FROM Availabilities WHERE trainer_id = $1 AND day = $2 AND starting_time = $3 AND ending_time = $4", [trainer_id, day, starting_time, ending_time]);
+            if((await checkUnique).rows.length >= 1){
+                console.log("ERROR: Already scheduled that time.");
+                req.flash("error", "Error: Already scheduled that time!")
+                return res.redirect('/trainer');
+            }
+            const query = "INSERT INTO Availabilities(trainer_id, day, starting_time, ending_time, is_group_session) VALUES ($1, $2, $3, $4, $5)";
+            client.query(query, [trainer_id, day, starting_time, ending_time, is_group_session]);
+            return res.redirect('/trainer');
+
+        }
+        catch(err){
+            console.error(err);
+        }
+    }
+    //removing an availabilty 
+    else if(req.body.id == "delete-availability"){
+        const {trainer_id, day, starting_time, ending_time} = req.body;
+        //checking 
+        const checkUnique = client.query("SELECT * FROM Availabilities WHERE trainer_id = $1 AND day = $2 AND starting_time = $3 AND ending_time = $4", [trainer_id, day, starting_time, ending_time]);
+        if((await checkUnique).rows.length == 0){
+            console.log("MASSIVE ERROR: Schedule doesn't exist. Cannot delete.");
+            req.flash("error", "Error: Schedule doesn't exist. Cannot delete.")
+            return res.redirect('/trainer');
+        }
+
+        const query = "DELETE FROM Availabilities WHERE trainer_id = $1 AND day = $2 AND starting_time = $3 AND ending_time = $4";
+        client.query(query, [trainer_id, day, starting_time, ending_time]);
+        return res.redirect('/trainer');
+
+    }
+});
+
 
 //listen on PORT 
 app.listen(PORT, () => {
