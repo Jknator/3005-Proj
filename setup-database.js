@@ -77,7 +77,7 @@ async function runDMLFile(){
             await client.query(String(data));
         }
         catch(err){
-            console.error("Error running DDL file:", err);
+            console.error("Error running DML file:", err);
         }
     }
     catch(err){
@@ -122,7 +122,7 @@ async function hashPasswords(){
         
     }
     catch(err){
-        console.error("Error running DML file:", err);
+        console.error("Error hashing DML file:", err);
     }
 }
 

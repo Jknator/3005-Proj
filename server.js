@@ -38,8 +38,8 @@ app.use(express.urlencoded({extended: false}));
 
 app.use(session({
     secret: "random-secret",
-    saveUninitialized: true,
-    resave: true
+    saveUninitialized: false,
+    resave: false
 }));
 app.use(flash());
 app.use(function(req, res, next){
@@ -63,16 +63,43 @@ app.get('', (req,res) => {
 app.get('/member-login', (req,res) => {
     res.render('member-login')
 });
-app.get('/member', (req,res) => {
-    res.render('member-dashboard')
+app.get('/member', async (req,res) => {
+    try{
+        const member = req.session.member;
+        if (!member) {
+            return res.redirect("/member-login");
+        }
+        const results = await client.query("SELECT * FROM FitnessGoals WHERE member_id = $1;", [member.member_id]);
+        const fitnessGoals = results.rows;
+        res.render('member-dashboard', {member: member, fitnessGoals: fitnessGoals});
+    }
+    catch(err){
+         console.error(err)
+        //most likely server closed and member no longer is in session. So just redirect to login page
+        res.redirect("/member-login")
+    }
 });
 
 //trainer paths
 app.get('/trainer-login', (req,res) => {
     res.render('trainer-login')
 });
-app.get('/trainer', (req,res) => {
-    res.render('trainer-dashboard')
+app.get('/trainer', async (req,res) => {
+    try{
+        const trainer = req.session.trainer;
+        if (!trainer) {
+            return res.redirect("/trainer-login");
+        }
+        const results = await client.query("SELECT * FROM Members");
+        const members = results.rows;
+
+        res.render('trainer-dashboard', {trainer: trainer, members: members});
+    }
+    catch(err){
+        console.error(err)
+        //most likely server closed and member no longer is in session. So just redirect to login page
+        res.redirect("/trainer-login")
+    }
 });
 
 //admin paths
@@ -138,6 +165,8 @@ app.post("/member-login", async (req,res) => {
             const password_matches = await bcrypt.compare(password, member.password);
 
             if(password_matches){
+                //update the member in the session
+                req.session.member = member;
                 return res.redirect("/member");
             }
             else{
@@ -170,6 +199,7 @@ app.post("/trainer-login", async (req,res) => {
             const password_matches = await bcrypt.compare(password, trainer.password);
 
             if(password_matches){
+                req.session.trainer = trainer;
                 return res.redirect("/trainer");
             }
             else{
@@ -222,6 +252,99 @@ app.post("/admin-login", async (req,res) => {
         //req.flash("error", "User does not exist")
         //return res.redirect("/member-login");
     }
+});
+
+app.post("/member", async (req,res) => {
+
+    //change details of the member
+    if(req.body.id == "account-form"){
+        let {first_name, last_name, email, height, weight, old_password, new_password, confirm_password} = req.body;
+        try{
+            const queryResult = await client.query("SELECT * FROM members WHERE UPPER(email) = UPPER($1)", [email]);
+            const member = queryResult.rows[0];
+            
+            //password is being changed if user entered new password 
+            if(old_password && new_password && confirm_password){
+                //check if passwords match 
+                const password_matches = await bcrypt.compare(old_password, member.password);
+
+                if(confirm_password == new_password && password_matches){
+                    const hashedPassword = await bcrypt.hash(new_password, 10);
+                    const updatePasswordQuery = 'UPDATE members SET password = $1 WHERE member_id = $2';
+                    await client.query(updatePasswordQuery, [hashedPassword, member.member_id]);
+                }
+                else{
+                    console.log("Member did not properly fill passwords section");
+                    req.flash("error", "Error: either password was wrong or new passwords did not match!")
+                    return res.redirect('/member');
+                }
+            }
+    
+            const updateQuery = 'UPDATE members SET first_name = $1, last_name = $2, height = $3, weight = $4 WHERE member_id = $5';
+            await client.query(updateQuery, [first_name, last_name, height, weight, member.member_id]);
+
+            //refresh the member and update member inforamtion to the session
+            const queryResult2 = await client.query("SELECT * FROM members WHERE UPPER(email) = UPPER($1)", [email]);
+            const member2 = queryResult2.rows[0];
+            req.session.member = member2;
+            return res.redirect('/member');
+
+        }
+        catch(err){
+            console.error("Error:", err);
+            //req.flash("error", "User does not exist")
+            //return res.redirect("/member-login");
+        }
+    }
+    else if(req.body.id == "adding_new_fitness_goal"){
+        try{
+            let {fitness_goal, goal_deadline, member_id} = req.body;
+
+            //checking if the fitness_goal is to large
+            if(fitness_goal.length > 200){
+                console.log("Fitness goal is to long!");
+                req.flash("test", "Error: fitness goal is too long!")
+                return res.redirect('/member');
+            }
+            //check to see if fitness_goal and member_id form a unique key
+            const checkUnique = client.query("SELECT * FROM FitnessGoals WHERE goal_type = $1 AND member_id = $2", [fitness_goal, member_id]);
+            if((await checkUnique).rows.length != 0){
+                console.log("Fitness goal is not unique!");
+                req.flash("test", "Error: fitness goal is not unique!")
+                return res.redirect('/member');
+            }
+
+            const query = "INSERT INTO FitnessGoals(goal_type, goal_date, member_id) VALUES ($1, $2, $3)";
+            client.query(query, [fitness_goal, goal_deadline, member_id]);
+            return res.redirect('/member');
+        }
+        catch(err){
+            console.error("Error:", err);
+        }
+    }
+    else if(req.body.id == "delete-goal"){
+        try{
+            console.log(req.body)
+            let {fitness_goal, member_id} = req.body;
+
+            //check to see if fitness_goal and member_id form a unique key. If it doesn't then there is a big error happening cause that shouldn't be happening
+            const checkUnique = client.query("SELECT * FROM FitnessGoals WHERE goal_type = $1 AND member_id = $2", [fitness_goal, member_id]);
+            
+            if((await checkUnique).rows.length == 0){
+                console.log("MASSIVE ERROR: Cannot delete fitness goal.");
+                req.flash("test", "Error: cannot delete fitness goal!")
+                return res.redirect('/member');
+            }
+
+            const deleteQuery = 'DELETE FROM fitnessGoals WHERE member_id = $1 AND goal_type = $2';
+            client.query(deleteQuery, [member_id, fitness_goal]);
+            return res.redirect('/member');
+        }
+        catch(err){
+            console.error(err);
+        }
+    }
+
 });
 
 //listen on PORT 

@@ -5,7 +5,7 @@ CREATE TABLE Members(
     email VARCHAR(255) UNIQUE NOT NULL,
     password varChar(255) NOT NULL, 
     height INTEGER, 
-    width INTEGER
+    weight INTEGER
 );
 
 CREATE TABLE Trainers(
@@ -36,7 +36,7 @@ CREATE TABLE Equipments (
 
 CREATE TABLE Availabilities(
     trainer_id INTEGER,
-    day INTEGER CHECK (day >=1 AND day <= 7), 
+    day VARCHAR(255), 
     starting_time TIME, 
     ending_time TIME,
     is_group_session BOOLEAN, 
@@ -66,9 +66,8 @@ CREATE TABLE Bills (
 );
 
 CREATE TABLE FitnessGoals(
-    goal_type INTEGER,
+    goal_type varChar(255),
     member_id INTEGER,
-    goal_value INTEGER, 
     goal_date DATE,
     FOREIGN KEY (member_id) REFERENCES Members (member_id),
     PRIMARY KEY (goal_type, member_id)

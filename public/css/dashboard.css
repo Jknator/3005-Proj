@@ -1,0 +1,67 @@
+html, body {
+    height: 95%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: aqua; 
+}
+
+h1{
+    font-size: 400%;
+    text-align: center;
+}
+
+h2 {
+    text-align: center;
+}
+
+.center-text {
+    width: 100%;
+    display: block;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    text-align: center;
+}
+
+li {
+    color: darkred;
+    text-align: center; 
+    display: block; 
+    width: 100%; 
+    margin-left: 1%;
+}
+
+table{
+  margin-left: auto;
+  margin-right: auto;
+  background: white;
+}
+
+
+.addNewGoal{
+    width: 100%;
+    display: block;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    text-align: center;
+}
+
+.centerText{
+    text-align: center;
+    font-size: 110%;
+}
+
+                /* Style for the list container */
+                .list-container {
+                    max-height: 200px; /* Set maximum height */
+                    overflow-y: auto; /* Enable vertical scrolling */
+                    border: 1px solid #ccc; /* Optional: Add border for better visibility */
+                }
+                
+                /* Style for the list items */
+                .list-item {
+                    padding: 5px;
+                    border-bottom: 1px solid #ddd; /* Optional: Add border between items */
+                }

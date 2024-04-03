@@ -3,26 +3,186 @@
     <head>
         <meta charset = "UTF-8">
         <meta name = "viewport" content = "width=device-width, inital-scale = 1.0">
-        <title>Index</title>
-        <link rel="stylesheet" href="css/main.css">
+        <title>member-dashboard</title>
+        <link rel="stylesheet" href="css/dashboard.css">
     </head>
     <body>
-        <h1>Register</h1>
-        <form action = "/login" method="post">
-            <div>
-                <input type = "text" id="name" name = "name" placeholder="Name" required>
+        <h1 id="welcome-text">Welcome <%= member.first_name %></h1>
+        <hr>
+        <div id="account-info">
+            <h2><u>Member Account Information</u></h2>    
+              <% if (messages.success) { %>
+                <li>><%= messages.success %></li>
+              <% } %>
+              <% if (messages.error) { %>
+                    <li><%= messages.error %></li> 
+              <% } %>         
+            <div class="center-text">
+                <p><strong>First Name:</strong> <%= member.first_name %></p>
+                <p><strong>Last Name:</strong> <%= member.last_name %></p>
+                <p><strong>Email:</strong> <%= member.email %></p>
+                <p><strong>Height:</strong> <%= member.height %></p>
+                <p><strong>Weigth:</strong> <%= member.weight %></p>
+                <button id="edit-button">Edit Account</button>
             </div>
-            <div>
-                <input type = "email" id="email" name = "email" placeholder="Email" required>
-            </div>
-            <div>
-                <input type = "password" id="password" name = "password" placeholder="Password" required>
-            </div>
-            <div>
-                <input type = "submit" value="Register">
-            </div>
-            <a href="/register">Make new account</a>
+        </div>
+    
+        <div id="edit-info" style="display: none;">
 
+            <h2><u>Edit Account Information</u></h2>
+            <div class="center-text">
+                <form id="account-form" action="/member" method="POST"  autocomplete="off">
+                    <input type="hidden" name="id" value="account-form">
+                    <label for="first_name">First Name:</label>
+                    <input type="text" id="first_name" name="first_name" value="<%= member.first_name %>" required>
+                    <br><br>
+                    <label for="last_name">Last Name:</label>
+                    <input type="text" id="last_name" name="last_name" value="<%= member.last_name %>" required>
+                    <br><br>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" value="<%= member.email %>" required>
+                    <br><br>
+                    <label for="height">Height(cm):</label>
+                    <input type="number" id="height" name="height" value="<%= member.height %>"  required>
+                    <br><br>
+                    <label for="weight">Weight(kg):</label>
+                    <input type="number" id="weight" name="weight" value="<%= member.weight %>"  required>
+                    <br><br>
+                    <label for="old_password">Password:</label>
+                    <input type="password" id="old_password" name="old_password">
+                    <br><br>
+                    <label for="new_password">New Password:</label>
+                    <input type="password" id="new_password" name="new_password">
+                    <br><br>
+                    <label for="confirm_password">Confirm New Password:</label>
+                    <input type="password" id="confirm_password" name="confirm_password">
+                    <br><br>
+                    <button type="submit">Save Changes</button>
+                    <br><br>
+                </form>
+                <button id="cancel-button">Cancel Edit</button>
+            </div>
+        </div>
+
+        <script>
+            const edit_button = document.getElementById('edit-button');
+            const cancel_button = document.getElementById('cancel-button');
+            const info = document.getElementById('account-info');
+            const edit = document.getElementById('edit-info');
+
+            edit_button.addEventListener('click', function() {
+                if (info.style.display === 'none') {
+                    info.style.display = 'block';
+                    edit.style.display = 'none';
+                } else {
+                    info.style.display = 'none';
+                    edit.style.display = 'block';
+                }
+            });
+
+            cancel_button.addEventListener('click', function() {
+                if (info.style.display === 'none') {
+                    info.style.display = 'block';
+                    edit.style.display = 'none';
+                } else {
+                    info.style.display = 'none';
+                    edit.style.display = 'block';
+                }
+            });
+
+            const old_Password = document.getElementById('old_password');
+            const new_Password = document.getElementById('new_password');
+            const confirm_New_Password = document.getElementById('confirm_password');
+
+            function togglePasswordRequirement(){
+                if (new_Password.value || old_Password.value || confirm_New_Password.value) {
+                    new_Password.required = true;
+                    old_Password.required = true;
+                    confirm_New_Password.required = true;
+                } else {
+                    new_Password.required = false;
+                    old_Password.required = false;
+                    confirm_New_Password.required = false;
+                }
+            }
+
+            togglePasswordRequirement();
+            old_Password.addEventListener('input', togglePasswordRequirement);
+            new_Password.addEventListener('input', togglePasswordRequirement);
+            confirm_New_Password.addEventListener('input', togglePasswordRequirement);
+        </script>
+        <hr>
+
+        <h2><u>Fitness Goals</u></h2>
+        <% if (messages.test) { %>
+            <li><%= messages.test %></li>
+        <% } %>
+
+        <p class="centerText">
+        <div class="addNewGoal">
+            <form id = "adding_new_fitness_goal" action="/member" method="POST"  autocomplete="off">
+                <input type="hidden" name="id" value="adding_new_fitness_goal">
+                <input id = "member_id_input" type="hidden" name="member_id" value= <%= member.member_id %>>
+                <label for="fitness_goal">Fitness Goal:</label>
+                <input type="text" id="fitness_goal" name="fitness_goal" required>
+                <label for="goal_deadline">Deadline:</label>
+                <input type="date" id="goal_deadline" name="goal_deadline" required>
+                <br><br>
+                <button type="save-goal">Save Goal</button>
+            </form>
+        </div>
+        <br>
+        
+        <p class="centerText"><u>Health Goals</u></p>
+
+        <table id="fitness_goals" border="1" style = "weight: 50%; table-layout: fixed; word-wrap: break-word;">
+            <thead>
+                <tr>
+                    <th>Fitness Goal</th>
+                    <th>Goal deadline</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% fitnessGoals.forEach(function(goal) { %>
+                    <tr>
+                        <td><%= goal.goal_type %></td>
+                        <td ><%= goal.goal_date %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <br>
+
+        <div class="center-text"> 
+            <input type="number" id="remove-row" min="0" max="<%= fitnessGoals.length %>" placeholder="Delete Row">
+            <button id="delete-button">Delete Row</button>
+        </div>
+
+        <form id="delete-goal" action="/member" method="POST"  autocomplete="off">
+                <input type ="hidden" name ="id" value="delete-goal">
+                <input type ="hidden" id = "fitness_goal_2" name ="fitness_goal">
+                <input type ="hidden" id = "member_id" name = "member_id">
         </form>
+
+        <script>
+                //all this messy code just to delete a goal. 
+                const deleteButton = document.getElementById("delete-button");
+
+                deleteButton.addEventListener('click', function() {
+                    const rowNumberInput = document.getElementById("remove-row").value;
+                    const member_id = document.getElementById('member_id_input').value;
+                    const table = document.getElementById('fitness_goals').rows
+
+                    if (rowNumberInput && !isNaN(rowNumberInput) && rowNumberInput > 0 && rowNumberInput <= table.length) {
+                        document.getElementById('fitness_goal_2').value = table[rowNumberInput].cells[0].innerHTML;
+                        document.getElementById('member_id').value = member_id;
+                        document.getElementById('delete-goal').submit();
+                    }
+                });
+        </script>
+
+        <hr>
+        <h2><u>Random shit</u></h2>
+
     </body>
 </html>

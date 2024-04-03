@@ -1,0 +1,78 @@
+<!DOCTYPE html> 
+<html lang="en">
+    <head>
+        <meta charset = "UTF-8">
+        <meta name = "viewport" content = "width=device-width, inital-scale = 1.0">
+        <title>member-dashboard</title>
+        <link rel="stylesheet" href="css/dashboard.css">
+    </head>
+    <body>
+        <h1 id="welcome-text">Welcome <%= trainer.first_name %></h1>
+
+        <hr>
+        <h2><u>Check member profiles</u></h2>
+        <div class="center-text">
+            <input type="text" id="search-member" placeholder="Search members">
+        </div>
+        <br>
+        
+        <table id="members-table" border="1" style = "width: 50%; table-layout: fixed; word-wrap: break-word;">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last name</th>
+                    <th>Email</th>
+                    <th>Height</th>
+                    <th>Weight</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% members.forEach(function(member) { %>
+                    <tr>
+                        <td><%= member.first_name %></td>
+                        <td ><%= member.last_name %></td>
+                        <td><%= member.email %></td>
+                        <td><%= member.height ? member.height : "unknown" %></td>
+                        <td><%= member.height ? member.weight : "unknown" %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <br>
+        <script>
+            //filters members list
+            const searchInput = document.getElementById('search-member');
+            const memberList = document.getElementById('members-table').rows;
+        
+            searchInput.addEventListener('input', function() {
+                const searchTerm = searchInput.value.toLowerCase();
+        
+                for(const member of memberList){
+                    const name = (member.cells[0].innerHTML + " " + member.cells[1].innerHTML).toLowerCase();
+                    console.log(name + " vs " + searchTerm)
+                    if (name.includes(searchTerm)) {
+                        member.style.display = '';
+                    } else {
+                        member.style.display = 'none';
+                    }
+                }
+            });
+        </script>
+
+        <hr>
+        <h2><u>Set schedule</u></h2>
+        <table id="members-table" border="1" style = "width: 50%; table-layout: fixed; word-wrap: break-word;">
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Starting Time</th>
+                    <th>Ending Time</th>
+                    <th>Group Session</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+    </body>
+</html>
