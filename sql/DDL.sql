@@ -49,7 +49,7 @@ CREATE TABLE BookedSessions(
     member_id INTEGER,
     trainer_id INTEGER, 
     room_id INTEGER,
-    day INTEGER CHECK (day >=1 AND day <= 7), 
+    day VARCHAR(255), 
     starting_time TIME, 
     ending_time TIME,
     FOREIGN KEY (member_id) REFERENCES Members (member_id),
@@ -70,6 +70,7 @@ CREATE TABLE FitnessGoals(
     goal_type varChar(255),
     member_id INTEGER,
     goal_date DATE,
+    completed BOOLEAN DEFAULT false,
     FOREIGN KEY (member_id) REFERENCES Members (member_id),
     PRIMARY KEY (goal_type, member_id)
 );

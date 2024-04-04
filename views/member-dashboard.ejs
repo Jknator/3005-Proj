@@ -11,9 +11,6 @@
         <hr>
         <div id="account-info">
             <h2><u>Member Account Information</u></h2>    
-              <% if (messages.success) { %>
-                <li>><%= messages.success %></li>
-              <% } %>
               <% if (messages.error) { %>
                     <li><%= messages.error %></li> 
               <% } %>         
@@ -114,8 +111,8 @@
         <hr>
 
         <h2><u>Fitness Goals</u></h2>
-        <% if (messages.error) { %>
-            <li><%= messages.error %></li>
+        <% if (messages.fitnessError) { %>
+            <li><%= messages.fitnessError %></li>
         <% } %>
 
         <p class="centerText">
@@ -154,12 +151,13 @@
         <br>
 
         <div class="center-text"> 
-            <input type="number" id="remove-row" min="1" max="<%= fitnessGoals.length %>" placeholder="Delete Row">
-            <button id="delete-button">Delete Row</button>
+            <input type="number" id="remove-row" min="1" max="<%= fitnessGoals.length %>" placeholder="Select Row">
+            <button id="delete-button">Abandon Goal</button>
+            <button id="complete-button">Completed Goal</button>
         </div>
 
-        <form id="delete-goal" action="/member" method="POST"  autocomplete="off">
-                <input type ="hidden" name ="id" value="delete-goal">
+        <form id="command-for-goal" action="/member" method="POST"  autocomplete="off">
+                <input type ="hidden" id = "command-for-goal-choice" name ="id" value="delete-goal">
                 <input type ="hidden" id = "fitness_goal_2" name ="fitness_goal">
                 <input type ="hidden" id = "member_id" name = "member_id">
         </form>
@@ -167,6 +165,7 @@
         <script>
                 //all this messy code just to delete a goal. 
                 const deleteButton = document.getElementById("delete-button");
+                const completeButton = document.getElementById("complete-button");
 
                 deleteButton.addEventListener('click', function() {
                     const rowNumberInput = document.getElementById("remove-row").value;
@@ -176,13 +175,199 @@
                     if (rowNumberInput && !isNaN(rowNumberInput) && rowNumberInput > 0 && rowNumberInput <= table.length) {
                         document.getElementById('fitness_goal_2').value = table[rowNumberInput].cells[0].innerHTML;
                         document.getElementById('member_id').value = member_id;
-                        document.getElementById('delete-goal').submit();
+                        document.getElementById('command-for-goal-choice').value = "discard-goal"
+                        document.getElementById('command-for-goal').submit();
+                    }
+                });
+
+                completeButton.addEventListener('click', function() {
+                    const rowNumberInput = document.getElementById("remove-row").value;
+                    const member_id = document.getElementById('member_id_input').value;
+                    const table = document.getElementById('fitness_goals').rows
+
+                    if (rowNumberInput && !isNaN(rowNumberInput) && rowNumberInput > 0 && rowNumberInput <= table.length) {
+                        document.getElementById('fitness_goal_2').value = table[rowNumberInput].cells[0].innerHTML;
+                        document.getElementById('member_id').value = member_id;
+                        document.getElementById('command-for-goal-choice').value = "complete-goal"
+                        document.getElementById('command-for-goal').submit();
                     }
                 });
         </script>
 
         <hr>
-        <h2><u>Random shit</u></h2>
+        <h2><u>Schedule Session</u></h2>      
+        <table id="availability-table" border="1" style = "width: 70%; table-layout: fixed; word-wrap: break-word;">
+            <thead>
+                <tr>
+                    <th>Row</th>
+                    <th>Trainer Name</th>
+                    <th>Trainer ID</th>
+                    <th>Day</th>
+                    <th>Starting Time</th>
+                    <th>Ending Time</th>
+                    <th>Group Session</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% availabilities.forEach(function(availability, index) { %>
+                    <tr>
+                        <td><%= index + 1 %></td>
+                        <td><%= trainerNames[availability.trainer_id] %></td>
+                        <td><%= availability.trainer_id %></td>
+                        <td><%= availability.day %></td>
+                        <td ><%= availability.starting_time %></td>
+                        <td><%= availability.ending_time %></td>
+                        <td><%= availability.is_group_session%></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <br>
+        <% if (messages.scheduleError) { %>
+            <li><%= messages.scheduleError %></li> 
+        <% } %>   
+        <div class="center-text"> 
+            <p><u>Choose a room and session to book</u></p>
+            <select id="room-select">
+                <% rooms.forEach(function(room) { %>
+                    <option value="<%= room.room_id %>"><%= room.room_name %></option>
+                <% }); %>
+            </select>            
+            <input type="number" id="select-session-input" min="1" max="<%= availabilities.length %>" placeholder="Select Session(row)">
+            <button id="select-session-button">Select Session</button>
+        </div>
 
+        <form id="select-session" action="/member" method="POST"  autocomplete="off">
+            <input type = "hidden" name ="id" value="select-session">
+            <input type = "hidden" id = "session-day" name ="day">
+            <input type = "hidden" id = "session-starting-time" name = "starting_time">
+            <input type = "hidden" id = "session-ending-time" name = "ending_time">
+            <input type = "hidden" id = "session-trainer-id" name = "trainer_id">
+            <input  type = "hidden" id = "session-member-id" name = "member_id" value =<%= member.member_id%>>
+            <input type = "hidden" id = "session-room-id" name = "room_id">
+            <input  type = "hidden" id = "is-group-session" name = "is_group_session" value =<%= member.member_id%>>
+        </form>
+
+        <script>
+            //all this messy code just to delete a goal. 
+            const selectSessionButton = document.getElementById("select-session-button");
+
+            selectSessionButton.addEventListener('click', function() {
+                const rowNumberInput = document.getElementById("select-session-input").value;
+                const table = document.getElementById('availability-table').rows
+
+                if (rowNumberInput && !isNaN(rowNumberInput) && rowNumberInput > 0 && rowNumberInput <= table.length) {
+                    document.getElementById('session-trainer-id').value = table[rowNumberInput].cells[2].innerHTML;
+                    document.getElementById('session-day').value = table[rowNumberInput].cells[3].innerHTML;
+                    document.getElementById('session-starting-time').value = table[rowNumberInput].cells[4].innerHTML;
+                    document.getElementById('session-ending-time').value = table[rowNumberInput].cells[5].innerHTML;
+                    document.getElementById('is-group-session').value = table[rowNumberInput].cells[6].innerHTML;
+                    document.getElementById('session-room-id').value = document.getElementById('room-select').value
+
+                    document.getElementById('select-session').submit();
+                }
+            });
+        </script>
+
+        <hr>
+        <h2><u>Booked Sessions</u></h2>
+
+        <table id="sessions-table" border="1" style = "width: 70%; table-layout: fixed; word-wrap: break-word;">
+            <thead>
+                <tr>
+                    <th>Row</th>
+                    <th>Trainer Name</th>
+                    <th>Trainer ID</th>
+                    <th>Day</th>
+                    <th>Starting Time</th>
+                    <th>Ending Time</th>
+                    <th>Room Name</th>
+                    <th value = "hidden">Room ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% bookedSessions.forEach(function(session, index) { %>
+                    <tr>
+                        <td><%= index + 1 %></td>
+                        <td><%= trainerNames[session.trainer_id] %></td>
+                        <td><%= session.trainer_id %></td>
+                        <td><%= session.day %></td>
+                        <td ><%= session.starting_time %></td>
+                        <td><%= session.ending_time %></td>
+                        <td><%= roomNames[session.room_id]%></td>
+                        <td value = "hidden"><%= session.room_id%></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <% if (messages.sessionError) { %>
+            <li><%= messages.sessionError %></li> 
+        <% } %>   
+        <div class="center-text"> 
+            <p><u>Remove a session</u></p>  
+            <input type="number" id="select-cancelled-session" min="1" max="<%= bookedSessions.length %>" placeholder="Select Session(row)">
+            <button id="cancel-session-button">Cancel Session</button>
+        </div>
+
+        <form id="cancel-session" action="/member" method="POST"  autocomplete="off">
+            <input type = "hidden" name ="id" value="cancel-session">
+            <input type = "hidden" id = "bookedSession-day" name ="day">
+            <input type = "hidden" id = "bookedSession-starting-time" name = "starting_time">
+            <input type = "hidden" id = "bookedSession-ending-time" name = "ending_time">
+            <input type = "hidden" id = "bookedSession-trainer-id" name = "trainer_id">
+            <input type = "hidden" id = "bookedSession-member-id" name = "member_id" value =<%= member.member_id%>>
+            <input type = "hidden" id = "bookedSession-room-id" name = "room_id">
+        </form>
+
+        <script>
+            //all this messy code just to delete a goal. 
+            const cancelSessionButton = document.getElementById("cancel-session-button");
+
+            cancelSessionButton.addEventListener('click', function() {
+                const rowNumberInput = document.getElementById("select-cancelled-session").value;
+                const table = document.getElementById('sessions-table').rows
+
+                if (rowNumberInput && !isNaN(rowNumberInput) && rowNumberInput > 0 && rowNumberInput <= table.length) {
+                    document.getElementById('bookedSession-trainer-id').value = table[rowNumberInput].cells[2].innerHTML;
+                    document.getElementById('bookedSession-day').value = table[rowNumberInput].cells[3].innerHTML;
+                    document.getElementById('bookedSession-starting-time').value = table[rowNumberInput].cells[4].innerHTML;
+                    document.getElementById('bookedSession-ending-time').value = table[rowNumberInput].cells[5].innerHTML;
+                    document.getElementById('bookedSession-room-id').value = table[rowNumberInput].cells[7].innerHTML;
+
+                    document.getElementById('cancel-session').submit();
+                }
+            });
+        </script>
+        <br>
+
+        <hr>
+        <h2><u>Info</u></h2>
+        <div class="center-text">
+            <p><u>Suggested Exercise Routines:</u> </p>
+            <p>Monday: Cardio. </p>
+            <p>Tuesday: Lower body.</p>
+            <p>Wednesday: Upper body and core.</p>
+            <p>Thursday: Active rest and recovery.</p>
+            <p>Friday: Lower body with a focus on glutes.</p>
+            <p>Saturday: Upper body.</p>
+            <p>Sunday: Rest and recovery.</p>
+            <br>
+
+            <p><u>Health Statistics:</u> </p>
+            <p>Average Height in Canada(males): 175.1 cm (5 ft 9 in)</p>
+            <p>Average Height in Canada(females): 162.3 cm (5 ft 4 in)</p>
+            <p>Average Weight in Canada(males): 84.6 kg (187 lb)</p>
+            <p>Average Weight in Canada(females): 70.1 kg (155 lb)</p>
+            <br>
+
+            <p><u>Fitness Achievments:</u> </p>
+            <% completedFitnessGoals.forEach(function(goal) { %>
+                <li><%= goal.goal_type %></li>
+                <br>
+            <% }); %>
+
+        </div>
+        <br><br><br><br><br>
     </body>
 </html>
