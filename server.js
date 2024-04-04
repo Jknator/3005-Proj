@@ -69,7 +69,7 @@ app.get('/member', async (req,res) => {
         if (!member) {
             return res.redirect("/member-login");
         }
-        const results = await client.query("SELECT * FROM FitnessGoals WHERE member_id = $1;", [member.member_id]);
+        const results = await client.query("SELECT * FROM FitnessGoals WHERE member_id = $1", [member.member_id]);
         const fitnessGoals = results.rows;
         res.render('member-dashboard', {member: member, fitnessGoals: fitnessGoals});
     }
@@ -90,10 +90,11 @@ app.get('/trainer', async (req,res) => {
         if (!trainer) {
             return res.redirect("/trainer-login");
         }
-        const result1 = await client.query("SELECT * FROM Availabilities WHERE trainer_id = $1;", [trainer.trainer_id]);
+        //query that returns the avaialbities ordered by the day. sadly there is no inbuilt thing so I had to manually write this horrendous query
+        const result1 = await client.query("SELECT * FROM Availabilities WHERE trainer_id = $1 ORDER BY CASE WHEN day = 'Monday' THEN 1  WHEN day = 'Tuesday' THEN 2 WHEN day = 'Wednesday' THEN 3  WHEN day = 'Thursday' THEN 4  WHEN day = 'Friday' THEN 5  WHEN day = 'Saturday' THEN 6 WHEN day = 'Sunday' THEN 7 END;", [trainer.trainer_id]);
         const availabilities = result1.rows;
 
-        const result2 = await client.query("SELECT * FROM Members");
+        const result2 = await client.query("SELECT * FROM Members ORDER BY first_name");
         const members = result2.rows;
 
         res.render('trainer-dashboard', {trainer: trainer, members: members, availabilities: availabilities});
@@ -353,6 +354,15 @@ app.post("/member", async (req,res) => {
 
 });
 
+//returns true or false if the given time interferes in any of the other time. 
+function isDateInConflict(starting_time, ending_time, day, availabilities){
+    for(const availability of availabilities){
+        if(!((starting_time > availability.ending_time && ending_time > availability.ending_time) || (availability.ending_time > ending_time && availability.starting_time > ending_time)) && availability.day == day){
+            return true 
+        }
+    }
+    return false;
+}
 
 app.post("/trainer", async (req,res) => {
     //adding an availability 
@@ -365,6 +375,26 @@ app.post("/trainer", async (req,res) => {
             if((await checkUnique).rows.length >= 1){
                 console.log("ERROR: Already scheduled that time.");
                 req.flash("error", "Error: Already scheduled that time!")
+                return res.redirect('/trainer');
+            }
+            //if starting and ending date match ignore request
+            if(ending_time == starting_time){
+                console.log("ERROR: Starting and Ending date match.");
+                req.flash("error", "Error:Starting and Ending date match.")
+                return res.redirect('/trainer');
+            }
+            //making sure starting and ending date are consistent
+            if(starting_time > ending_time){
+                console.log("ERROR: Starting time is further in the day than the ending time.");
+                req.flash("error", "Error: Starting time is further in the day than the ending time.")
+                return res.redirect('/trainer');
+            }
+            //the avialabilites of the trainer
+            const result1 = await client.query("SELECT * FROM Availabilities WHERE trainer_id = $1;", [trainer_id]);
+            const availabilities = result1.rows;
+            if(isDateInConflict(starting_time, ending_time, day, availabilities)){
+                console.log("ERROR: Given availaiblity conflicts with another");
+                req.flash("error", "Error: Given availaiblity conflicts with another.")
                 return res.redirect('/trainer');
             }
             const query = "INSERT INTO Availabilities(trainer_id, day, starting_time, ending_time, is_group_session) VALUES ($1, $2, $3, $4, $5)";

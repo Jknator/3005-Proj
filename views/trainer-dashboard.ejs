@@ -64,8 +64,8 @@
         <% if (messages.error) { %>
             <li><%= messages.error %></li>
         <% } %>
-        <br>
         <div class="center-text">
+            <p>Opening time: 07:00:00 - 23:59:59</p>
             <form id="set-schedule" action="/trainer" method="POST"  autocomplete="off">
                 <input type="hidden" name="id" value="set-schedule">
                 <input id = "trainer-id" type="hidden" name="trainer_id" value= <%= trainer.trainer_id %>>
@@ -80,9 +80,9 @@
                     <option value = "Saturday">Saturday</option>
                 </select>
                 <label for="choose-starting-time">Starting:</label>
-                <input type="text" id="choose-starting-time" name="starting_time" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]" placeholder="HH:MM:SS" required>
+                <input type="text" id="choose-starting-time" name="starting_time" pattern="(0[7-9]|[1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]" placeholder="HH:MM:SS" required>
                 <label for="choose-ending-time">Ending:</label>
-                <input type="text" id="choose-ending-time" name = "ending_time" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]" placeholder="HH:MM:SS" required>
+                <input type="text" id="choose-ending-time" name = "ending_time" pattern="(0[7-9]|[1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]" placeholder="HH:MM:SS" required>
                 <label for="choose-if-group">Group Session:</label>
                 <select id="choose-if-group" name = "is_group_session" required>
                     <option value = "true">True</option>
