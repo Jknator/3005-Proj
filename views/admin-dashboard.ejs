@@ -221,12 +221,43 @@
                         <td><%= bill.member_id %></td>
                         <td><%= bill.amount %></td>
                         <td><%= bill.transaction_date %></td>
-                        <td><%= bill.isPaid %></td>
+                        <td><%= bill.ispaid %></td>
                     </tr>
                 <% }); %>
             </tbody>
         </table>
-        
+
+        <br>
+        <div class ="center-text">
+            <% if (messages.billingError) { %>
+                <li><%= messages.billingError %></li> 
+            <% } %>   
+            <form id="bill-member" action="/admin" method="POST"  autocomplete="off">
+                <p><u>Bill Member</u></p>
+                <input type = "hidden" name ="id" value="bill-member">
+                <label for = "bill-member">Billing: </label>
+                <input  id = "bill-member" name ="member_id" placeholder="Input Member_id" required>
+                <label for = "bill-amount">Amount:</label>
+                <input type="number" id = "bill-amount" name ="amount" placeholder="Input Amount" required>
+                <button type="submit">Bill</button>
+            </form>
+            <br>
+            <form id="close-bill" action="/admin" method="POST"  autocomplete="off">
+                <p><u>Close Bill</u></p>
+                <input type = "hidden" name ="id" value="close-bill">
+                <label for = "closs-bill">Closing Bill:</label>
+                <input  id = "closs-bill" name ="transaction_id" placeholder="Input Transaction ID" required>
+                <button type="submit">Remove Row</button>
+            </form>
+        </div>
+        <hr>
+        <h2><u>Logout</u></h2>
+        <div class="center-text">
+            <form id="pay-bill" action="/admin" method="POST"  autocomplete="off">
+                <input type ="hidden" name = "id" value ="logout">
+                <button type = "submit">Logout</button>
+            </form>
+        </div>
         <br><br><br><br>
     </body>
 </html>

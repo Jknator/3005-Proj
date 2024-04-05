@@ -368,11 +368,71 @@
             <% }); %>
         </div>
 
-
         <hr>
         <h2><u>Bills</u></h2>
+        <table id="bill-table" border="1" style = "width: 50%; table-layout: fixed; word-wrap: break-word;">
+            <thead>
+                <tr>
+                    <th>Transaction ID</th>
+                    <th>Amount</th>
+                    <th>Transaction Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% bills.forEach(function(bill) { %>
+                    <tr>
+                        <td><%= bill.transaction_id %></td>
+                        <td><%= bill.amount %></td>
+                        <td><%= bill.transaction_date %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        
+        <% if (messages.billError) { %>
+            <li><%= messages.billError %></li> 
+        <% } %>   
 
+        <div class="center-text">
+            <form id="pay-bill" action="/member" method="POST"  autocomplete="off">
+                <input type = "hidden" name ="id" value="pay-bill">
+                <input type = "hidden" name ="member_id" value= <%= member.member_id %>>
+                <p><u>Pay Full Amount: </u></p>
+            </form>
+            <button id= "payButton">Pay</button>
+        </div>
 
+        <script>
+            const form = document.getElementById('pay-bill');
+            const payButton = document.getElementById('payButton');
+        
+            payButton.addEventListener('click', function() {
+                const email = prompt('Paying with paypal:\n Enter your email:');
+                if(email == null){
+                    return;
+                }
+                const password = prompt('Paying with paypal:\n Enter your password:');
+                if(password == null){
+                    return;
+                }
+
+                form.innerHTML += `
+                    <input type="hidden" name="email" value="${email}">
+                    <input type="hidden" name="password" value="${password}">
+                `;
+                form.submit();
+            });
+        </script>
+        
+        <hr>
+        <h2><u>Logout</u></h2>
+        <div class="center-text">
+            <form id="pay-bill" action="/member" method="POST"  autocomplete="off">
+                <input type ="hidden" name = "id" value ="logout">
+                <button type = "submit">Logout</button>
+            </form>
+        </div>
+        
         <br><br><br><br><br>
     </body>
 </html>

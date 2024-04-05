@@ -168,7 +168,7 @@ app.get('/admin', async (req, res) => {
         const callMaintenance = result4.rows;
 
         //bills
-        const result5 = await client.query("SELECT * FROM bills");
+        const result5 = await client.query("SELECT * FROM bills ORDER BY transaction_id");
         const bills = result5.rows;
 
         res.render('admin-dashboard', {admin: admin, equipments: equipments, rooms: rooms, bookedSessions: bookedSessions, callMaintenance:callMaintenance, bills: bills})
@@ -398,7 +398,6 @@ app.post("/member", async (req, res) => {
     //deleting a goal
     else if (req.body.id == "discard-goal") {
         try {
-            console.log("discard")
             let { fitness_goal, member_id } = req.body;
 
             //check to see if fitness_goal and member_id form a unique key. If it doesn't then there is a big error happening cause that shouldn't be happening
@@ -450,6 +449,11 @@ app.post("/member", async (req, res) => {
                 const query = "DELETE FROM Availabilities WHERE trainer_id = $1 AND day = $2 AND starting_time = $3 AND ending_time = $4";
                 client.query(query, [trainer_id, day, starting_time, ending_time]);
             }
+
+            //billing
+            const billingQuery = "INSERT INTO bills(member_id, amount) VALUES ($1, $2)";
+            client.query(billingQuery, [member_id, 20]);
+
             const query = "INSERT INTO BookedSessions(member_id, trainer_id, room_id, day, starting_time, ending_time) VALUES ($1, $2, $3, $4, $5, $6)";
             client.query(query, [member_id, trainer_id, room_id, day, starting_time, ending_time]);
             return res.redirect('/member');
@@ -469,6 +473,29 @@ app.post("/member", async (req, res) => {
         catch(err){
             console.error(err);
         }
+    }
+    else if(req.body.id == "pay-bill"){
+        try{
+            const {member_id} = req.body;
+
+            const bills = client.query("SELECT* FROM bills where member_id = $1 AND ispaid = false", [member_id]);
+            if((await bills).rows.length == 0){
+                console.log("ERROR: There are no bills to pay for.");
+                req.flash("billError", "Error: Bills already paid.")
+                return res.redirect('/member');
+            }
+
+            const query = "UPDATE bills SET isPaid = true WHERE member_id = $1 AND isPaid = false";
+            client.query(query, [member_id]);
+            return res.redirect('/member');
+        }
+        catch(err){
+            console.error(err);
+        }
+    }
+    else if(req.body.id == "logout"){
+        req.session.member = null;
+        return res.redirect('/member-login');
     }
 });
 
@@ -539,6 +566,10 @@ app.post("/trainer", async (req, res) => {
         return res.redirect('/trainer');
 
     }
+    else if(req.body.id == "logout"){
+        req.session.trainer = null;
+        return res.redirect('/trainer-login');
+    }
 });
 
 
@@ -605,6 +636,47 @@ app.post("/admin", async (req, res) => {
         catch(err){
             console.error(err)
         }
+    }
+    else if(req.body.id == "bill-member"){
+        try{
+            const {member_id, amount} = req.body;
+            const billedMember = client.query("SELECT* FROM members where member_id = $1", [member_id]);
+
+            //checking to see if member exists
+            if((await billedMember).rows.length == 0){
+                console.log("ERROR: Billed a member who does not exist.");
+                req.flash("billingError", "Error: Billed a member who does not exist.")
+                return res.redirect('/admin');
+            }
+
+            client.query("INSERT INTO bills(member_id, amount) VALUES ($1, $2)", [member_id, amount]);
+            return res.redirect('/admin');
+
+        }
+        catch(err){
+            console.error(err)
+        }
+    }
+    else if(req.body.id == "close-bill"){
+        try{
+            const {transaction_id} = req.body;
+            
+            const bill = client.query("SELECT* FROM bills where transaction_id = $1 AND isPaid = false", [transaction_id]);
+            if((await bill).rows.length == 0){
+                console.log("ERROR: Bill has already been paid.");
+                req.flash("billingError", "Error: Bill already paid.")
+                return res.redirect('/admin');
+            }
+            client.query("UPDATE bills SET isPaid = true WHERE transaction_id = $1", [transaction_id])
+            return res.redirect('/admin');
+        }
+        catch(err){
+            console.error(err)
+        }
+    }
+    else if(req.body.id == "logout"){
+        req.session.admin = null;
+        return res.redirect('/admin-login');
     }
 });
 
