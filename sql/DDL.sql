@@ -32,7 +32,7 @@ CREATE TABLE Rooms (
 CREATE TABLE Equipments (
     equipment_id SERIAL PRIMARY KEY,
     equipment_name VARCHAR(255) NOT NULL,
-    equipment_status INTEGER NOT NULL
+    equipment_condition INTEGER NOT NULL
 );
 
 CREATE TABLE Availabilities(
@@ -61,8 +61,8 @@ CREATE TABLE Bills (
     transaction_id SERIAL PRIMARY KEY, 
     member_id INTEGER,
     amount INTEGER, 
-    transaction_data INTEGER, 
-    isPaid Boolean,
+    transaction_date date DEFAULT CURRENT_DATE,
+    isPaid Boolean DEFAULT false,
     FOREIGN KEY (member_id) REFERENCES Members (member_id)
 );
 
@@ -77,7 +77,7 @@ CREATE TABLE FitnessGoals(
 
 CREATE TABLE CallMaintenance( 
     admin_id INTEGER,
-    equipment_id INTEGER,
+    equipment_id INTEGER UNIQUE,
     starting_date DATE,
     ending_date DATE,
     FOREIGN KEY (admin_id) REFERENCES Admins (admin_id),

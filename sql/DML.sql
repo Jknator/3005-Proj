@@ -35,7 +35,7 @@ VALUES
 ('Personal Training Room 2'),
 ('Personal Training Room 3');
 
-INSERT INTO Equipments(equipment_name, equipment_status)
+INSERT INTO Equipments(equipment_name, equipment_condition)
 VALUES
 ('Treadmill', 87),
 ('Barbell', 42),

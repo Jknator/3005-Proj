@@ -100,7 +100,11 @@ app.get('/member', async (req, res) => {
 
         const result6 = await client.query("SELECT * FROM FitnessGoals WHERE member_id = $1 AND completed = true", [member.member_id]);
         const completedFitnessGoals = result6.rows;
-        res.render('member-dashboard', { member: member, fitnessGoals: fitnessGoals, availabilities: availabilities, trainerNames: trainerNames, rooms: rooms, bookedSessions: bookedSessions, roomNames: roomNames, completedFitnessGoals: completedFitnessGoals });
+
+        const result7 = await client.query("SELECT * FROM bills WHERE member_id = $1 and isPaid = false", [member.member_id]);
+        const bills = result7.rows;
+
+        res.render('member-dashboard', { member: member, fitnessGoals: fitnessGoals, availabilities: availabilities, trainerNames: trainerNames, rooms: rooms, bookedSessions: bookedSessions, roomNames: roomNames, completedFitnessGoals: completedFitnessGoals, bills: bills });
     }
     catch (err) {
         console.error(err)
@@ -123,6 +127,7 @@ app.get('/trainer', async (req, res) => {
         const result1 = await client.query("SELECT * FROM Availabilities WHERE trainer_id = $1 ORDER BY CASE WHEN day = 'Monday' THEN 1  WHEN day = 'Tuesday' THEN 2 WHEN day = 'Wednesday' THEN 3  WHEN day = 'Thursday' THEN 4  WHEN day = 'Friday' THEN 5  WHEN day = 'Saturday' THEN 6 WHEN day = 'Sunday' THEN 7 END;", [trainer.trainer_id]);
         const availabilities = result1.rows;
 
+        //get members
         const result2 = await client.query("SELECT * FROM Members ORDER BY first_name");
         const members = result2.rows;
 
@@ -139,8 +144,40 @@ app.get('/trainer', async (req, res) => {
 app.get('/admin-login', (req, res) => {
     res.render('admin-login')
 });
-app.get('/admin', (req, res) => {
-    res.render('admin-dashboard')
+app.get('/admin', async (req, res) => {
+    try{
+        const admin = req.session.admin;
+        if (!admin) {
+            return res.redirect("/admin-login");
+        }
+        
+        //equipments
+        const result1 = await client.query("SELECT * FROM Equipments");
+        const equipments = result1.rows;
+
+        //rooms
+        const result2 = await client.query("SELECT * FROM Rooms");
+        const rooms = result2.rows;
+
+        //session
+        const result3 = await client.query("SELECT * FROM bookedSessions ORDER BY CASE WHEN day = 'Monday' THEN 1  WHEN day = 'Tuesday' THEN 2 WHEN day = 'Wednesday' THEN 3  WHEN day = 'Thursday' THEN 4  WHEN day = 'Friday' THEN 5  WHEN day = 'Saturday' THEN 6 WHEN day = 'Sunday' THEN 7 END, trainer_id;");
+        const bookedSessions = result3.rows;
+
+        //equipment under maintenance 
+        const result4 = await client.query("SELECT * FROM CallMaintenance");
+        const callMaintenance = result4.rows;
+
+        //bills
+        const result5 = await client.query("SELECT * FROM bills");
+        const bills = result5.rows;
+
+        res.render('admin-dashboard', {admin: admin, equipments: equipments, rooms: rooms, bookedSessions: bookedSessions, callMaintenance:callMaintenance, bills: bills})
+    }
+    catch(err){
+        console.error(err)
+        //most likely server closed and member no longer is in session. So just redirect to login page
+        res.redirect("/admin-login")
+    }
 });
 
 //used when user wants to make a account
@@ -266,6 +303,7 @@ app.post("/admin-login", async (req, res) => {
             const password_matches = await bcrypt.compare(password, admin.password);
 
             if (password_matches) {
+                req.session.admin = admin;
                 return res.redirect("/admin");
             }
             else {
@@ -407,18 +445,11 @@ app.post("/member", async (req, res) => {
                 req.flash("scheduleError", "Error: Given availaiblity conflicts with another.")
                 return res.redirect('/member');
             }
-            //check to see if new nessions conflicts with room avail.
-            if (isDateInConflict(starting_time, ending_time, day, (await room_sessions).rows)) {
-                console.log("ERROR: Given availaiblity conflicts with another rooms avail.");
-                req.flash("scheduleError", "Error: Given availaiblity conflicts with another rooms avail. Please choose a different room")
-                return res.redirect('/member');
-            }
             //check to see if session is multi-group. If not then remove old avail. as it is now taken
             if (!is_group_session) {
                 const query = "DELETE FROM Availabilities WHERE trainer_id = $1 AND day = $2 AND starting_time = $3 AND ending_time = $4";
                 client.query(query, [trainer_id, day, starting_time, ending_time]);
             }
-
             const query = "INSERT INTO BookedSessions(member_id, trainer_id, room_id, day, starting_time, ending_time) VALUES ($1, $2, $3, $4, $5, $6)";
             client.query(query, [member_id, trainer_id, room_id, day, starting_time, ending_time]);
             return res.redirect('/member');
@@ -507,6 +538,73 @@ app.post("/trainer", async (req, res) => {
         client.query(query, [trainer_id, day, starting_time, ending_time]);
         return res.redirect('/trainer');
 
+    }
+});
+
+
+app.post("/admin", async (req, res) => {
+    //sending an equipment under maintenance
+    if (req.body.id == "call-maintenance") {
+        try{
+            const {equipment_id, admin_id, starting_date, ending_date } = req.body;
+            if(starting_date >= ending_date){
+                console.log("ERROR: Invalid dates given. Either starting date is further or rqual to the ending date.");
+                req.flash("equipmentError", "Error: Invalid dates given. Either starting date is further or equal to the ending date.")
+                return res.redirect('/admin');
+            }
+            const isEquipmentUnderMaintenance = client.query("Select * FROM CallMaintenance WHERE equipment_id = $1", [equipment_id])
+            if((await isEquipmentUnderMaintenance).rows.length >= 1){
+                console.log("ERROR: Equipment is already under maintenance.");
+                req.flash("equipmentError", "Error: Equipment is already under maintenance.")
+                return res.redirect('/admin');
+            }
+            
+            client.query("INSERT INTO callMaintenance(equipment_id, admin_id, starting_date, ending_date) VALUES ($1, $2, $3, $4)", [equipment_id, admin_id, starting_date, ending_date])
+            return res.redirect("/admin")
+        }
+        catch(err){
+            console.error(err);
+        }
+    }
+    else if(req.body.id == "update-session"){
+        try{
+            const { room_id, day, starting_time, ending_time,  edited_row} = req.body;
+
+            //checking if dates make sense
+            if(starting_time >= ending_time){
+                console.log("ERROR: Invalid dates given. Either starting date is further or rqual to the ending date.");
+                req.flash("equipmentError", "Error: Invalid dates given. Either starting date is further or equal to the ending date.")
+                return res.redirect('/admin');
+            }
+
+            //getting the edited session 
+            const result = await client.query("SELECT * FROM bookedSessions ORDER BY CASE WHEN day = 'Monday' THEN 1  WHEN day = 'Tuesday' THEN 2 WHEN day = 'Wednesday' THEN 3  WHEN day = 'Thursday' THEN 4  WHEN day = 'Friday' THEN 5  WHEN day = 'Saturday' THEN 6 WHEN day = 'Sunday' THEN 7 END, trainer_id;");
+            const bookedSessions = result.rows;
+            const editedSession = bookedSessions[edited_row-1]
+            //updating the row
+            client.query('UPDATE bookedSessions SET room_id = $1, day = $2, starting_time = $3, ending_time = $4 WHERE trainer_id = $5 AND member_id = $6 AND room_id = $7 AND starting_time = $8 AND ending_time = $9 AND day = $10'
+                ,[room_id, day, starting_time, ending_time, editedSession.trainer_id, editedSession.member_id, editedSession.room_id, editedSession.starting_time, editedSession.ending_time, editedSession.day])
+            
+            return res.redirect("/admin");
+        }
+        catch(err){
+            console.error(err);
+        }
+    }
+    else if(req.body.id == "remove-session"){
+        try{
+            const {edited_row} = req.body;
+            //getting the edited session 
+            const result = await client.query("SELECT * FROM bookedSessions ORDER BY CASE WHEN day = 'Monday' THEN 1  WHEN day = 'Tuesday' THEN 2 WHEN day = 'Wednesday' THEN 3  WHEN day = 'Thursday' THEN 4  WHEN day = 'Friday' THEN 5  WHEN day = 'Saturday' THEN 6 WHEN day = 'Sunday' THEN 7 END, trainer_id;");
+            const bookedSessions = result.rows;
+            const editedSession = bookedSessions[edited_row-1]
+            client.query('DELETE FROM bookedSessions WHERE trainer_id = $1 AND member_id = $2 AND room_id = $3 AND starting_time = $4 AND ending_time = $5 AND day = $6', [editedSession.trainer_id, editedSession.member_id, editedSession.room_id, editedSession.starting_time, editedSession.ending_time, editedSession.day]);
+            return res.redirect("/admin");
+
+        }
+        catch(err){
+            console.error(err)
+        }
     }
 });
 
