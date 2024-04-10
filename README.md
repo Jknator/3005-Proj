@@ -1,7 +1,7 @@
 # 3005-Proj
 
-1) Download node.js
-- https://nodejs.org/en/download
+1) Download node.js by following instructions
+- https://nodejs.org/en/learn/getting-started/how-to-install-nodejs
 
 2) in a terminal go to the project directory and enter "**npm install**" to download all dependencies
 
