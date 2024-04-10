@@ -3,7 +3,7 @@
 1) Download node.js
 - https://nodejs.org/en/download
 
-2) in a terminal go to the project directory and enter "npm install" to download all dependencies
+2) in a terminal go to the project directory and enter "**npm install**" to download all dependencies
 
 3) Add a .env file into the project directory with the template:
    ```
@@ -21,6 +21,9 @@
   - ex: If there is only a members table then it will not run the DML.sql and DDL.sql 
 So make sure you dont partially have some of the tables. Have a empty database for safety. 
 
-5) Then run the server by doing "node server.js"
+5) Then run the server by doing "**node server.js**"
+
+6) Go to a broswer and enter **http://localhost:3000/**
+ - We have the server listen on port 3000
 
 Demo Video: https://youtu.be/DswULL5D6qU?si=tw9Xmc1zGRoCwMQa
